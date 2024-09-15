@@ -5,45 +5,45 @@ from scipy.stats import mannwhitneyu
 men = pd.read_csv("men_results.csv") 
 women = pd.read_csv("women_results.csv")
 
-#Filer the data for the time range and tournament 
+#Filered the data for the time range and tournament from the two imported datasets. 
 men['date'] = pd.to_datetime(men["date"]) 
 men_subset = men[(men['date'] > "2002-01-01") & (men["tournament"].isin(["FIFA World Cup"]))] 
 women['date'] = pd.to_datetime(women["date"])  
 women_subset = women[(women['date'] > "2002-01-01") & (women['tournament'].isin(["FIFA World Cup"]))] 
 
-#Create group and goals_scored columns 
+#Created a "group" and "goals_scored" columns to differentiate goals scored between the 2 genders.
 men_subset["group"] = "men"
 women_subset["group"] = "women" 
 men_subset['goals_scored'] = men_subset['home_score'] + men_subset['away_score']
 women_subset['goals_scored'] = women_subset['home_score'] + women_subset['away_score'] 
 
-#Determine normality using histograms 
+#Used histograms to determine the normality.
 men_subset["goals_scored"].hist()
 plt.show()
 plt.clf() 
 
-#Goals scored is not normally distributed, so use Wilcoxon-MannWhitney test of two groups 
+#Goals scored is not normally distributed, so I used Wilcoxon-MannWhitney test of two groups
 men_subset['goals_scored'].hist() 
 plt.show()
 plt.clf() 
 
-#Combine women's and men's data and calculate goals scored in each match 
+#Combined women's and men's data and calculated the goals scored in each match. 
 both = pd.concat([women_subset, men_subset], axis=0, ignore_index=True) 
 
-#Transform the data for the pingouin Mann-Whitney U t-test/Wilcoxon-Mann-Whitney test 
+#Manipulated the data for the pingouin Mann-Whitney U t-test, or Wilcoxon-Mann-Whitney test 
 both_subset = both[['goals_scored', "group"]] 
 both_subset_wide = both_subset.pivot(columns='group', values='goals_scored') 
 
-#perform right-tailed Wilcoxon-Mann-Whitney test with pingouin 
+#Performed a right-tailed Wilcoxon-Mann-Whitney test with pingouin 
 results_pg = pingouin.mwu(x=both_subset_wide["women"], y=both_subset_wide["men"], alternative="greater")
 
-#alternative SciPy solution: Perform right-tailed Wilcoxon-Mann-Whitney test with scipy 
+#Also performed a right-tailed Wilcoxon-Mann-Whitney test with scipy 
 results_scipy = mannwhitneyu(x=women_subset["goals_scored"], y=men_subset["goals_scored"], alternative="greater") 
 
-#Get p-value as a float 
+#P-value as a float.
 p_val = results_pg["p-val"].values[0] 
 
-#Determine hypothesis test result using sig. level 
+#Hypothesis testing the result using sig. level 
 if p_val <= 0.01:
     result = "reject" 
 else:
